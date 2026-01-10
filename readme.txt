@@ -97,6 +97,24 @@ Some hosting providers use ModSecurity which blocks GET requests with a body or 
 
 **Alternative:** Contact your hosting provider to whitelist rule 960011 for the endpoint URL.
 
+= How do I exclude the endpoint from access logs? =
+
+The healthcheck endpoint generates entries in your server access logs. To exclude it:
+
+**Nginx** (add to your server block):
+
+    location = /wp-json/wp-uptime/v1/check {
+        access_log off;
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+**Apache** (add to your vhost or .htaccess):
+
+    SetEnvIf Request_URI "^/wp-json/wp-uptime/v1/check" dontlog
+    CustomLog /var/log/apache2/access.log combined env=!dontlog
+
+**Shared hosting:** Contact your hosting provider to exclude this URL from logging.
+
 == Screenshots ==
 
 1. Admin settings page with token configuration

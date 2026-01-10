@@ -101,6 +101,28 @@ X-Healthcheck-Token: your-token
 - 🛡️ **Timing-safe comparison** — Prevents timing attacks
 - 🚫 **No sensitive data** — Only returns `ok`, `fail`, or `forbidden`
 
+## Exclude from Access Logs
+
+The healthcheck endpoint generates entries in your server access logs. To exclude it:
+
+### Nginx
+
+```nginx
+location = /wp-json/wp-uptime/v1/check {
+    access_log off;
+    try_files $uri $uri/ /index.php?$args;
+}
+```
+
+### Apache
+
+```apache
+SetEnvIf Request_URI "^/wp-json/wp-uptime/v1/check" dontlog
+CustomLog /var/log/apache2/access.log combined env=!dontlog
+```
+
+**Shared hosting:** Contact your hosting provider to exclude this URL from logging.
+
 ## Requirements
 
 - WordPress 5.0+
