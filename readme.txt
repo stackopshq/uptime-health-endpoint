@@ -85,6 +85,18 @@ Yes, the plugin works on multisite installations. Each site has its own endpoint
 
 The endpoint returns HTTP 503 with `{"status":"fail"}`. Your monitoring tool will detect this as downtime.
 
+= I get a 400 error with ModSecurity (Infomaniak, OVH, etc.) =
+
+Some hosting providers use ModSecurity which blocks GET requests with a body or `Content-Length: 0` header (rule 960011).
+
+**Solution for Uptime Kuma:** Do not use the "Keyword" or "Body" field. Only check the status code (200 = UP). The plugin already returns different status codes for each state:
+
+* `200` = Site healthy
+* `503` = Site unhealthy
+* `403` = Invalid token
+
+**Alternative:** Contact your hosting provider to whitelist rule 960011 for the endpoint URL.
+
 == Screenshots ==
 
 1. Admin settings page with token configuration
