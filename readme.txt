@@ -1,9 +1,9 @@
-=== WP Uptime Endpoint ===
+=== Uptime Health Endpoint ===
 Contributors: kallioli
 Donate link: https://github.com/sponsors/kallioli
-Tags: uptime, monitoring, healthcheck, uptime-kuma, uptimerobot, pingdom, status
+Tags: uptime, monitoring, healthcheck, uptime-kuma, uptimerobot
 Requires at least: 5.0
-Tested up to: 6.7
+Tested up to: 6.9
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -13,7 +13,7 @@ Provides a secure REST API endpoint for uptime monitoring tools like Uptime Kuma
 
 == Description ==
 
-WP Uptime Endpoint provides a dedicated healthcheck endpoint for your WordPress site that goes beyond simple HTTP checks. It verifies that your site is actually functional, not just responding.
+Uptime Health Endpoint provides a dedicated healthcheck endpoint for your WordPress site that goes beyond simple HTTP checks. It verifies that your site is actually functional, not just responding.
 
 **Endpoint:** `/wp-json/wp-uptime/v1/check`
 

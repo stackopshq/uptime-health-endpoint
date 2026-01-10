@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name:       WP Uptime Endpoint
+ * Plugin Name:       Uptime Health Endpoint
  * Description:       Provides a /wp-json/wp-uptime/v1/check endpoint for uptime monitoring (Uptime Kuma, UptimeRobot, etc.).
  * Version:           1.0.0
  * Author:            Kevin Allioli
  * Author URI:        https://github.com/kallioli
- * Plugin URI:        https://github.com/kallioli/wp-uptime-endpoint
+ * Plugin URI:        https://github.com/kallioli/uptime-health-endpoint
  * License:           GPL-2.0+
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       wp-uptime-endpoint
+ * Text Domain:       uptime-health-endpoint
  * Requires at least: 5.0
  * Requires PHP:      7.4
  */
@@ -34,8 +34,8 @@ add_action('admin_init', 'wp_healthcheck_admin_init');
  */
 function wp_healthcheck_admin_menu() {
     add_options_page(
-        'WP Uptime Endpoint',
-        'WP Uptime Endpoint',
+        'Uptime Health Endpoint',
+        'Uptime Health Endpoint',
         'manage_options',
         'wp-uptime-endpoint',
         'wp_healthcheck_admin_page'
@@ -83,7 +83,7 @@ function wp_healthcheck_admin_page() {
     $endpoint_url = rest_url('wp-uptime/v1/check');
     ?>
     <div class="wrap">
-        <h1>WP Uptime Endpoint</h1>
+        <h1>Uptime Health Endpoint</h1>
         
         <h2>Endpoint</h2>
         <p><code><?php echo esc_html($endpoint_url); ?></code></p>
@@ -310,16 +310,17 @@ function wp_healthcheck_validate_token(WP_REST_Request $request) {
 function wp_healthcheck_get_client_ip() {
     $ip = '';
     
+    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $ips = explode(',', sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])));
         $ip = trim($ips[0]);
     } elseif (!empty($_SERVER['HTTP_X_REAL_IP'])) {
-        $ip = $_SERVER['HTTP_X_REAL_IP'];
+        $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_REAL_IP']));
     } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
-        $ip = $_SERVER['REMOTE_ADDR'];
+        $ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
     }
     
-    return sanitize_text_field($ip);
+    return $ip;
 }
 
 /**
@@ -333,6 +334,7 @@ function wp_healthcheck_run_checks() {
     $errors = [];
 
     // Check 1: Database connectivity
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $db_result = $wpdb->get_var('SELECT 1');
     if ((string) $db_result !== '1') {
         $errors[] = 'db';

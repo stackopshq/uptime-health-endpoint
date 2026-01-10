@@ -1,4 +1,4 @@
-# WP Uptime Endpoint
+# Uptime Health Endpoint
 
 A WordPress plugin that provides a secure REST API endpoint for uptime monitoring tools like Uptime Kuma, UptimeRobot, Pingdom, and more.
 
