@@ -21,37 +21,37 @@ add_action('rest_api_init', function () {
     register_rest_route('wp-uptime/v1', '/check', [
         'methods'             => 'GET',
         'permission_callback' => '__return_true',
-        'callback'            => 'wp_healthcheck_handle_request',
+        'callback'            => 'uptiheen_handle_request',
     ]);
 });
 
 // Admin menu
-add_action('admin_menu', 'wp_healthcheck_admin_menu');
-add_action('admin_init', 'wp_healthcheck_admin_init');
+add_action('admin_menu', 'uptiheen_admin_menu');
+add_action('admin_init', 'uptiheen_admin_init');
 
 /**
  * Add admin menu page.
  */
-function wp_healthcheck_admin_menu() {
+function uptiheen_admin_menu() {
     add_options_page(
         'Uptime Health Endpoint',
         'Uptime Health Endpoint',
         'manage_options',
         'wp-uptime-endpoint',
-        'wp_healthcheck_admin_page'
+        'uptiheen_admin_page'
     );
 }
 
 /**
  * Register settings.
  */
-function wp_healthcheck_admin_init() {
-    register_setting('wp_healthcheck_settings', 'wp_healthcheck_token', [
+function uptiheen_admin_init() {
+    register_setting('uptiheen_settings', 'uptiheen_token', [
         'type'              => 'string',
         'sanitize_callback' => 'sanitize_text_field',
         'default'           => '',
     ]);
-    register_setting('wp_healthcheck_settings', 'wp_healthcheck_homepage', [
+    register_setting('uptiheen_settings', 'uptiheen_homepage', [
         'type'              => 'boolean',
         'sanitize_callback' => 'rest_sanitize_boolean',
         'default'           => false,
@@ -61,24 +61,24 @@ function wp_healthcheck_admin_init() {
 /**
  * Render admin page.
  */
-function wp_healthcheck_admin_page() {
+function uptiheen_admin_page() {
     // Check permissions
     if (!current_user_can('manage_options')) {
         return;
     }
 
     // Generate token if requested
-    if (isset($_POST['wp_healthcheck_generate_token']) && check_admin_referer('wp_healthcheck_settings-options')) {
+    if (isset($_POST['uptiheen_generate_token']) && check_admin_referer('uptiheen_settings-options')) {
         $new_token = bin2hex(random_bytes(32));
-        update_option('wp_healthcheck_token', $new_token);
+        update_option('uptiheen_token', $new_token);
     }
 
     // Get current values (constants take priority)
-    $token_from_constant = defined('WP_HEALTHCHECK_TOKEN');
-    $homepage_from_constant = defined('WP_HEALTHCHECK_HOMEPAGE');
+    $token_from_constant = defined('UPTIHEEN_TOKEN');
+    $homepage_from_constant = defined('UPTIHEEN_HOMEPAGE');
     
-    $current_token = $token_from_constant ? WP_HEALTHCHECK_TOKEN : get_option('wp_healthcheck_token', '');
-    $current_homepage = $homepage_from_constant ? WP_HEALTHCHECK_HOMEPAGE : get_option('wp_healthcheck_homepage', false);
+    $current_token = $token_from_constant ? UPTIHEEN_TOKEN : get_option('uptiheen_token', '');
+    $current_homepage = $homepage_from_constant ? UPTIHEEN_HOMEPAGE : get_option('uptiheen_homepage', false);
     
     $endpoint_url = rest_url('wp-uptime/v1/check');
     ?>
@@ -91,18 +91,18 @@ function wp_healthcheck_admin_page() {
         <hr>
         
         <form method="post" action="options.php">
-            <?php settings_fields('wp_healthcheck_settings'); ?>
+            <?php settings_fields('uptiheen_settings'); ?>
             
             <h2>Configuration</h2>
             <table class="form-table">
                 <tr>
-                    <th scope="row"><label for="wp_healthcheck_token">Token</label></th>
+                    <th scope="row"><label for="uptiheen_token">Token</label></th>
                     <td>
                         <?php if ($token_from_constant): ?>
                             <input type="password" value="<?php echo esc_attr($current_token); ?>" class="regular-text" readonly disabled>
-                            <p class="description">Defined via <code>WP_HEALTHCHECK_TOKEN</code> in wp-config.php</p>
+                            <p class="description">Defined via <code>UPTIHEEN_TOKEN</code> in wp-config.php</p>
                         <?php else: ?>
-                            <input type="password" name="wp_healthcheck_token" id="wp_healthcheck_token" 
+                            <input type="password" name="uptiheen_token" id="uptiheen_token" 
                                    value="<?php echo esc_attr($current_token); ?>" class="regular-text" autocomplete="off">
                             <p class="description">Token required to access the endpoint.</p>
                         <?php endif; ?>
@@ -115,7 +115,7 @@ function wp_healthcheck_admin_page() {
                             <button type="button" class="button" disabled>Generate New Token</button>
                             <p class="description">Disabled because the token is defined in wp-config.php</p>
                         <?php else: ?>
-                            <button type="submit" name="wp_healthcheck_generate_token" class="button">Generate New Token</button>
+                            <button type="submit" name="uptiheen_generate_token" class="button">Generate New Token</button>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -125,10 +125,10 @@ function wp_healthcheck_admin_page() {
                         <?php if ($homepage_from_constant): ?>
                             <input type="checkbox" <?php checked($current_homepage); ?> disabled>
                             <span>Enabled</span>
-                            <p class="description">Defined via <code>WP_HEALTHCHECK_HOMEPAGE</code> in wp-config.php</p>
+                            <p class="description">Defined via <code>UPTIHEEN_HOMEPAGE</code> in wp-config.php</p>
                         <?php else: ?>
                             <label>
-                                <input type="checkbox" name="wp_healthcheck_homepage" value="1" <?php checked($current_homepage); ?>>
+                                <input type="checkbox" name="uptiheen_homepage" value="1" <?php checked($current_homepage); ?>>
                                 Enable homepage verification (HTTP loopback)
                             </label>
                             <p class="description">Checks that the homepage displays without PHP errors. May fail on some hosting environments.</p>
@@ -239,14 +239,14 @@ function wp_healthcheck_admin_page() {
  * @param WP_REST_Request $request
  * @return WP_REST_Response
  */
-function wp_healthcheck_handle_request(WP_REST_Request $request) {
-    // Token validation (required if WP_HEALTHCHECK_TOKEN is defined)
-    if (!wp_healthcheck_validate_token($request)) {
+function uptiheen_handle_request(WP_REST_Request $request) {
+    // Token validation (required if UPTIHEEN_TOKEN is defined)
+    if (!uptiheen_validate_token($request)) {
         return new WP_REST_Response(['status' => 'forbidden'], 403);
     }
 
     // Run health checks
-    $checks = wp_healthcheck_run_checks();
+    $checks = uptiheen_run_checks();
 
     if (!empty($checks['errors'])) {
         return new WP_REST_Response(['status' => 'fail'], 503);
@@ -262,10 +262,10 @@ function wp_healthcheck_handle_request(WP_REST_Request $request) {
  * @param WP_REST_Request $request
  * @return bool
  */
-function wp_healthcheck_validate_token(WP_REST_Request $request) {
+function uptiheen_validate_token(WP_REST_Request $request) {
     // Rate limiting: max 10 failed attempts per minute per IP
-    $ip = wp_healthcheck_get_client_ip();
-    $transient_key = 'wp_hc_rate_' . md5($ip);
+    $ip = uptiheen_get_client_ip();
+    $transient_key = 'uptiheen_rate_' . md5($ip);
     $attempts = (int) get_transient($transient_key);
     
     if ($attempts >= 10) {
@@ -273,7 +273,7 @@ function wp_healthcheck_validate_token(WP_REST_Request $request) {
     }
     
     // Get token: constant takes priority, then database option
-    $expected = defined('WP_HEALTHCHECK_TOKEN') ? WP_HEALTHCHECK_TOKEN : get_option('wp_healthcheck_token', '');
+    $expected = defined('UPTIHEEN_TOKEN') ? UPTIHEEN_TOKEN : get_option('uptiheen_token', '');
     
     // If no token is configured, deny access (token is mandatory)
     if (empty($expected)) {
@@ -307,7 +307,7 @@ function wp_healthcheck_validate_token(WP_REST_Request $request) {
  *
  * @return string
  */
-function wp_healthcheck_get_client_ip() {
+function uptiheen_get_client_ip() {
     $ip = '';
     
     // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
@@ -328,7 +328,7 @@ function wp_healthcheck_get_client_ip() {
  *
  * @return array ['errors' => [...]]
  */
-function wp_healthcheck_run_checks() {
+function uptiheen_run_checks() {
     global $wpdb;
 
     $errors = [];
@@ -353,9 +353,9 @@ function wp_healthcheck_run_checks() {
     }
 
     // Check 4 (optional): Homepage renders without errors
-    $check_homepage = defined('WP_HEALTHCHECK_HOMEPAGE') ? WP_HEALTHCHECK_HOMEPAGE : get_option('wp_healthcheck_homepage', false);
+    $check_homepage = defined('UPTIHEEN_HOMEPAGE') ? UPTIHEEN_HOMEPAGE : get_option('uptiheen_homepage', false);
     if ($check_homepage) {
-        $homepage_check = wp_healthcheck_check_homepage();
+        $homepage_check = uptiheen_check_homepage();
         if ($homepage_check !== true) {
             $errors[] = 'homepage';
         }
@@ -370,7 +370,7 @@ function wp_healthcheck_run_checks() {
  *
  * @return bool|string True if OK, error message otherwise
  */
-function wp_healthcheck_check_homepage() {
+function uptiheen_check_homepage() {
     $url = home_url('/');
 
     $response = wp_remote_get($url, [

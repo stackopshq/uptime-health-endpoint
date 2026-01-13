@@ -37,8 +37,8 @@ Go to **Settings > WP Uptime Endpoint** and:
 ### Option 2: wp-config.php (for automated deployments)
 
 ```php
-define('WP_HEALTHCHECK_TOKEN', 'your-64-character-token-here');
-define('WP_HEALTHCHECK_HOMEPAGE', true); // Optional
+define('UPTIHEEN_TOKEN', 'your-64-character-token-here');
+define('UPTIHEEN_HOMEPAGE', true); // Optional
 ```
 
 Generate a secure token:

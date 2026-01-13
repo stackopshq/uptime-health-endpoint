@@ -56,8 +56,8 @@ Configure everything from the WordPress admin panel at **Settings > WP Uptime En
 
 For automated deployments (Docker, CI/CD), you can define constants:
 
-    define('WP_HEALTHCHECK_TOKEN', 'your-secret-token-here');
-    define('WP_HEALTHCHECK_HOMEPAGE', true); // Optional: enable homepage check
+    define('UPTIHEEN_TOKEN', 'your-secret-token-here');
+    define('UPTIHEEN_HOMEPAGE', true); // Optional: enable homepage check
 
 == Frequently Asked Questions ==
 
