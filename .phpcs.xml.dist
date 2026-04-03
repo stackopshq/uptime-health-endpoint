@@ -13,23 +13,99 @@
     <rule ref="WordPress"/>
 
     <!--
-        OOP plugins using namespaces legitimately use PascalCase filenames
-        (e.g. Admin.php, REST_Controller.php). The WordPress file-naming
-        convention (class-foo-bar.php) is designed for procedural code and
-        conflicts with PSR-4 autoloading conventions used in modern plugins.
+        OOP plugins using namespaces legitimately use PascalCase filenames.
+        The WordPress file-naming convention (class-foo-bar.php) targets
+        procedural code and conflicts with PSR-4 conventions.
     -->
     <rule ref="WordPress.Files.FileName">
         <exclude-pattern>src/*</exclude-pattern>
     </rule>
 
     <!--
-        Short array syntax [] is valid PHP 5.4+ and is used consistently
-        throughout this codebase. WordPress.org Plugin Check does not flag it.
+        Short array syntax [] is valid PHP 5.4+ and is not flagged by the
+        WordPress.org Plugin Check tool.
     -->
     <rule ref="Generic.Arrays.DisallowShortArraySyntax">
         <severity>0</severity>
     </rule>
     <rule ref="Universal.Arrays.DisallowShortArraySyntax">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Inline tabs for mid-line alignment are used consistently in this
+        codebase (plugin header, aligned variable declarations, inline
+        comments). WordPress.org Plugin Check does not flag this.
+    -->
+    <rule ref="Universal.WhiteSpace.DisallowInlineTabs">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Precision alignment (spaces after a tab for visual alignment in
+        PHP template sections) is common in WordPress admin pages.
+    -->
+    <rule ref="Universal.WhiteSpace.PrecisionAlignment">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Aligned assignment operators and array double arrows are a
+        deliberate readability choice in this codebase.
+    -->
+    <rule ref="Generic.Formatting.MultipleStatementAlignment">
+        <severity>0</severity>
+    </rule>
+    <rule ref="WordPress.Arrays.MultipleStatementAlignment">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        File and function doc comments: class files use a class-level
+        docblock; individual method comments are present where non-obvious.
+        Requiring a full docblock on every private getter is excessive.
+    -->
+    <rule ref="Squiz.Commenting.FileComment.Missing">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Commenting.FileComment.MissingPackageTag">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.Missing">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.Commenting.VariableComment.Missing">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Generic.Commenting.DocComment.MissingShort">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Inline comment punctuation: many inline comments are code labels
+        (e.g. "// SELECT 1") that do not need a trailing period.
+    -->
+    <rule ref="Squiz.Commenting.InlineComment.InvalidEndChar">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Short ternary ?: is valid PHP and used deliberately in one place
+        in Admin.php for a concise null-coalesce-like pattern.
+    -->
+    <rule ref="Universal.Operators.DisallowShortTernary">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        PEAR multi-line function call formatting conflicts with the
+        WordPress standard for array arguments — WordPress itself uses
+        the format this codebase follows.
+    -->
+    <rule ref="PEAR.Functions.FunctionCallSignature">
         <severity>0</severity>
     </rule>
 

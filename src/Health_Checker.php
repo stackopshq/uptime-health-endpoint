@@ -76,15 +76,29 @@ final class Health_Checker {
 			'theme'		 => [ $this, 'check_theme' ],	   // in-memory
 		];
 
-		if ( $cfg['cron'] )	   $checks['cron']	  = [ $this, 'check_cron' ];
-		if ( $cfg['memory'] )  $checks['memory']  = [ $this, 'check_memory' ];
-		if ( $cfg['uploads'] ) $checks['uploads'] = [ $this, 'check_uploads' ];
-		if ( $cfg['disk'] )	   $checks['disk']	  = [ $this, 'check_disk' ];
-		if ( $cfg['cache'] )   $checks['cache']	  = [ $this, 'check_object_cache' ];
+		if ( $cfg['cron'] ) {
+			$checks['cron'] = [ $this, 'check_cron' ];
+		}
+		if ( $cfg['memory'] ) {
+			$checks['memory'] = [ $this, 'check_memory' ];
+		}
+		if ( $cfg['uploads'] ) {
+			$checks['uploads'] = [ $this, 'check_uploads' ];
+		}
+		if ( $cfg['disk'] ) {
+			$checks['disk'] = [ $this, 'check_disk' ];
+		}
+		if ( $cfg['cache'] ) {
+			$checks['cache'] = [ $this, 'check_object_cache' ];
+		}
 
-		// Network calls last — both can be slow
-		if ( $cfg['http'] )		$checks['http']		= [ $this, 'check_http_outbound' ];
-		if ( $cfg['homepage'] ) $checks['homepage'] = [ $this, 'check_homepage' ];
+		// Network calls last — both can be slow.
+		if ( $cfg['http'] ) {
+			$checks['http'] = [ $this, 'check_http_outbound' ];
+		}
+		if ( $cfg['homepage'] ) {
+			$checks['homepage'] = [ $this, 'check_homepage' ];
+		}
 
 		// Third-party / theme custom checks
 		foreach ( (array) apply_filters( 'uptiheen_checks', [] ) as $key => $fn ) {
@@ -264,9 +278,12 @@ final class Health_Checker {
 		$unit  = strtoupper( substr( trim( $value ), -1 ) );
 		$bytes = (int) $value;
 		switch ( $unit ) {
-			case 'G': return $bytes * GB_IN_BYTES;
-			case 'M': return $bytes * MB_IN_BYTES;
-			case 'K': return $bytes * KB_IN_BYTES;
+			case 'G':
+				return $bytes * GB_IN_BYTES;
+			case 'M':
+				return $bytes * MB_IN_BYTES;
+			case 'K':
+				return $bytes * KB_IN_BYTES;
 		}
 		return $bytes;
 	}

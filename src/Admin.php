@@ -24,17 +24,61 @@ final class Admin {
 
 	public function register_settings(): void {
 		$defs = [
-			'uptiheen_tokens'		  => [ 'type' => 'string',	'sanitize_callback' => [ $this, 'sanitize_tokens' ],   'default' => '' ],
-			'uptiheen_ip_allowlist'	  => [ 'type' => 'string',	'sanitize_callback' => 'sanitize_textarea_field',		'default' => '' ],
-			'uptiheen_webhook_url'	  => [ 'type' => 'string',	'sanitize_callback' => 'esc_url_raw',					'default' => '' ],
-			'uptiheen_check_cron'	  => [ 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean',			'default' => true ],
-			'uptiheen_check_memory'	  => [ 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean',			'default' => true ],
-			'uptiheen_check_disk'	  => [ 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean',			'default' => true ],
-			'uptiheen_disk_threshold' => [ 'type' => 'integer', 'sanitize_callback' => 'absint',						'default' => 500 ],
-			'uptiheen_check_uploads'  => [ 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean',			'default' => true ],
-			'uptiheen_check_http'	  => [ 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean',			'default' => false ],
-			'uptiheen_check_cache'	  => [ 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean',			'default' => false ],
-			'uptiheen_homepage'		  => [ 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean',			'default' => false ],
+			'uptiheen_tokens'         => [
+				'type'              => 'string',
+				'sanitize_callback' => [ $this, 'sanitize_tokens' ],
+				'default'           => '',
+			],
+			'uptiheen_ip_allowlist'   => [
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_textarea_field',
+				'default'           => '',
+			],
+			'uptiheen_webhook_url'    => [
+				'type'              => 'string',
+				'sanitize_callback' => 'esc_url_raw',
+				'default'           => '',
+			],
+			'uptiheen_check_cron'     => [
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			],
+			'uptiheen_check_memory'   => [
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			],
+			'uptiheen_check_disk'     => [
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			],
+			'uptiheen_disk_threshold' => [
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'default'           => 500,
+			],
+			'uptiheen_check_uploads'  => [
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			],
+			'uptiheen_check_http'     => [
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => false,
+			],
+			'uptiheen_check_cache'    => [
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => false,
+			],
+			'uptiheen_homepage'       => [
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => false,
+			],
 		];
 		foreach ( $defs as $key => $args ) {
 			register_setting( 'uptiheen_settings', $key, $args );
@@ -81,7 +125,7 @@ final class Admin {
 
 		$tokens_raw = $token_const
 			? ( defined( 'UPTIHEEN_TOKENS' ) ? implode( "\n", UPTIHEEN_TOKENS ) : UPTIHEEN_TOKEN )
-			: ( trim( (string) get_option( 'uptiheen_tokens', '' ) ) ?: (string) get_option( 'uptiheen_token', '' ) );
+			: ( '' !== trim( (string) get_option( 'uptiheen_tokens', '' ) ) ? trim( (string) get_option( 'uptiheen_tokens', '' ) ) : (string) get_option( 'uptiheen_token', '' ) );
 
 		$allowlist	 = (string) get_option( 'uptiheen_ip_allowlist', '' );
 		$webhook	 = (string) get_option( 'uptiheen_webhook_url', '' );
@@ -93,7 +137,7 @@ final class Admin {
 			'cron'	   => (bool) get_option( 'uptiheen_check_cron', true ),
 			'memory'   => (bool) get_option( 'uptiheen_check_memory', true ),
 			'disk'	   => (bool) get_option( 'uptiheen_check_disk', true ),
-			'disk_mb'  => (int)	 get_option( 'uptiheen_disk_threshold', 500 ),
+			'disk_mb'  => (int) get_option( 'uptiheen_disk_threshold', 500 ),
 			'uploads'  => (bool) get_option( 'uptiheen_check_uploads', true ),
 			'http'	   => (bool) get_option( 'uptiheen_check_http', false ),
 			'cache'	   => (bool) get_option( 'uptiheen_check_cache', false ),
