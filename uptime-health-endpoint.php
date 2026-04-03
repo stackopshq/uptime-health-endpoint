@@ -1,32 +1,32 @@
 <?php
 /**
- * Plugin Name:       Uptime Health Endpoint
- * Description:       Provides a /wp-json/wp-uptime/v1/check endpoint for uptime monitoring (Uptime Kuma, UptimeRobot, etc.).
- * Version:           2.0.0
- * Author:            Kevin Allioli
- * Author URI:        https://github.com/kallioli
- * Plugin URI:        https://github.com/kallioli/uptime-health-endpoint
- * License:           GPL-2.0+
- * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       uptime-health-endpoint
+ * Plugin Name:		  Uptime Health Endpoint
+ * Description:		  Provides a /wp-json/wp-uptime/v1/check endpoint for uptime monitoring (Uptime Kuma, UptimeRobot, etc.).
+ * Version:			  2.0.0
+ * Author:			  Kevin Allioli
+ * Author URI:		  https://github.com/kallioli
+ * Plugin URI:		  https://github.com/kallioli/uptime-health-endpoint
+ * License:			  GPL-2.0+
+ * License URI:		  https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:		  uptime-health-endpoint
  * Requires at least: 5.0
- * Requires PHP:      7.4
+ * Requires PHP:	  7.4
  */
 
 namespace UptimeHealthEndpoint;
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 // ── Text domain ───────────────────────────────────────────────────────────────
 
 add_action( 'plugins_loaded', function () {
-    load_plugin_textdomain(
-        'uptime-health-endpoint',
-        false,
-        dirname( plugin_basename( __FILE__ ) ) . '/languages/'
-    );
+	load_plugin_textdomain(
+		'uptime-health-endpoint',
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages/'
+	);
 } );
 
 // ── Activation ────────────────────────────────────────────────────────────────
@@ -38,33 +38,33 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\on_activate' );
  * then flag a one-time redirect to the settings page.
  */
 function on_activate(): void {
-    $has_constant = defined( 'UPTIHEEN_TOKEN' )
-        || ( defined( 'UPTIHEEN_TOKENS' ) && is_array( UPTIHEEN_TOKENS ) );
-    $has_option   = get_option( 'uptiheen_tokens', '' ) !== ''
-        || get_option( 'uptiheen_token', '' ) !== '';
+	$has_constant = defined( 'UPTIHEEN_TOKEN' )
+		|| ( defined( 'UPTIHEEN_TOKENS' ) && is_array( UPTIHEEN_TOKENS ) );
+	$has_option	  = '' !== get_option( 'uptiheen_tokens', '' )
+		|| '' !== get_option( 'uptiheen_token', '' );
 
-    if ( ! $has_constant && ! $has_option ) {
-        update_option( 'uptiheen_tokens', bin2hex( random_bytes( 32 ) ) );
-    }
+	if ( ! $has_constant && ! $has_option ) {
+		update_option( 'uptiheen_tokens', bin2hex( random_bytes( 32 ) ) );
+	}
 
-    // Triggers a one-time redirect on the next admin page load (see Plugin.php)
-    add_option( 'uptiheen_activation_redirect', true );
+	// Triggers a one-time redirect on the next admin page load (see Plugin.php)
+	add_option( 'uptiheen_activation_redirect', true );
 }
 
 // ── Classes ───────────────────────────────────────────────────────────────────
 
 // Load in dependency order (leaf classes first)
 foreach ( [
-    'History',
-    'Webhook',
-    'Authenticator',
-    'Health_Checker',
-    'REST_Controller',
-    'Site_Health',
-    'Admin',
-    'Plugin',
+	'History',
+	'Webhook',
+	'Authenticator',
+	'Health_Checker',
+	'REST_Controller',
+	'Site_Health',
+	'Admin',
+	'Plugin',
 ] as $class ) {
-    require_once __DIR__ . '/src/' . $class . '.php';
+	require_once __DIR__ . '/src/' . $class . '.php';
 }
 
 Plugin::instance();
@@ -72,6 +72,6 @@ Plugin::instance();
 // CLI_Command extends \WP_CLI_Command which only exists when WP-CLI is running.
 // Load conditionally to avoid a fatal error on non-CLI requests.
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-    require_once __DIR__ . '/src/CLI_Command.php';
-    \WP_CLI::add_command( 'uptime', __NAMESPACE__ . '\CLI_Command' );
+	require_once __DIR__ . '/src/CLI_Command.php';
+	\WP_CLI::add_command( 'uptime', __NAMESPACE__ . '\CLI_Command' );
 }

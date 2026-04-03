@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<ruleset name="Uptime Health Endpoint">
+    <description>WordPress coding standards for Uptime Health Endpoint.</description>
+
+    <file>.</file>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/.git/*</exclude-pattern>
+
+    <rule ref="WordPress"/>
+
+    <!--
+        OOP plugins using namespaces legitimately use PascalCase filenames
+        (e.g. Admin.php, REST_Controller.php). The WordPress file-naming
+        convention (class-foo-bar.php) is designed for procedural code and
+        conflicts with PSR-4 autoloading conventions used in modern plugins.
+    -->
+    <rule ref="WordPress.Files.FileName">
+        <exclude-pattern>src/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Short array syntax [] is valid PHP 5.4+ and is used consistently
+        throughout this codebase. WordPress.org Plugin Check does not flag it.
+    -->
+    <rule ref="Generic.Arrays.DisallowShortArraySyntax">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Universal.Arrays.DisallowShortArraySyntax">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Minimum PHP version supported by this plugin -->
+    <config name="minimum_supported_wp_version" value="5.0"/>
+    <config name="testVersion" value="7.4-"/>
+</ruleset>

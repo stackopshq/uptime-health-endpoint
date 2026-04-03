@@ -5,36 +5,36 @@
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-    exit;
+	exit;
 }
 
 // ── Options ───────────────────────────────────────────────────────────────────
 
 $options = [
-    // Auth
-    'uptiheen_token',
-    'uptiheen_tokens',
-    'uptiheen_ip_allowlist',
-    // Checks
-    'uptiheen_homepage',
-    'uptiheen_check_cron',
-    'uptiheen_check_memory',
-    'uptiheen_check_disk',
-    'uptiheen_disk_threshold',
-    'uptiheen_check_uploads',
-    'uptiheen_check_http',
-    'uptiheen_check_cache',
-    // Notifications
-    'uptiheen_webhook_url',
-    // Runtime (non-autoloaded)
-    'uptiheen_history',
-    'uptiheen_last_status',
-    // Activation
-    'uptiheen_activation_redirect',
+	// Auth
+	'uptiheen_token',
+	'uptiheen_tokens',
+	'uptiheen_ip_allowlist',
+	// Checks
+	'uptiheen_homepage',
+	'uptiheen_check_cron',
+	'uptiheen_check_memory',
+	'uptiheen_check_disk',
+	'uptiheen_disk_threshold',
+	'uptiheen_check_uploads',
+	'uptiheen_check_http',
+	'uptiheen_check_cache',
+	// Notifications
+	'uptiheen_webhook_url',
+	// Runtime (non-autoloaded)
+	'uptiheen_history',
+	'uptiheen_last_status',
+	// Activation
+	'uptiheen_activation_redirect',
 ];
 
 foreach ( $options as $option ) {
-    delete_option( $option );
+	delete_option( $option );
 }
 
 // ── Transients ────────────────────────────────────────────────────────────────
@@ -46,9 +46,9 @@ delete_transient( 'uptiheen_http_probe' );
 // Use a LIKE query to wipe them all at once rather than tracking every IP.
 global $wpdb;
 $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-    $wpdb->prepare(
-        "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-        $wpdb->esc_like( '_transient_uptiheen_rate_' ) . '%',
-        $wpdb->esc_like( '_transient_timeout_uptiheen_rate_' ) . '%'
-    )
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+		$wpdb->esc_like( '_transient_uptiheen_rate_' ) . '%',
+		$wpdb->esc_like( '_transient_timeout_uptiheen_rate_' ) . '%'
+	)
 );

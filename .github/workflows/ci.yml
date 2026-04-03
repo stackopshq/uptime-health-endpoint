@@ -42,22 +42,19 @@ jobs:
 
       - name: Install PHPCS + WordPress rules
         run: |
-          composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
-          composer global require --no-interaction \
-            "dealerdirect/phpcodesniffer-composer-installer:^1" \
+          # Install without triggering the dealerdirect plugin (avoids allow-plugins prompt)
+          composer global require --no-plugins --no-interaction \
             "squizlabs/php_codesniffer:^3" \
             "wp-coding-standards/wpcs:^3" \
             "phpcsstandards/phpcsutils:^1" \
             "phpcsstandards/phpcsextra:^1"
+          # Register standards paths manually (what dealerdirect would do automatically)
+          ~/.composer/vendor/bin/phpcs --config-set installed_paths \
+            ~/.composer/vendor/wp-coding-standards/wpcs,~/.composer/vendor/phpcsstandards/phpcsutils,~/.composer/vendor/phpcsstandards/phpcsextra
 
       - name: Run PHPCS
         run: |
-          phpcs \
-            --standard=WordPress \
-            --extensions=php \
-            --ignore=*/vendor/* \
-            --report=checkstyle \
-            . | cs2pr
+          ~/.composer/vendor/bin/phpcs --report=checkstyle | cs2pr
 
   # ── 3. WordPress Plugin Check ─────────────────────────────────────────────
   plugin-check:
