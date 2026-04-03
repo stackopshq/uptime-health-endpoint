@@ -71,27 +71,33 @@ jobs:
 
       - name: Install WordPress (SQLite — no MySQL needed)
         run: |
-          mkdir -p /tmp/wordpress
+          # 1. Download WordPress core
           wp core download --path=/tmp/wordpress --quiet
 
-          # Use the SQLite integration plugin so we don't need a MySQL service
-          wp plugin install sqlite-database-integration \
-            --path=/tmp/wordpress --quiet
+          # 2. Download SQLite integration plugin directly (wp plugin install
+          #    requires wp-config.php which doesn't exist yet at this point)
+          mkdir -p /tmp/wordpress/wp-content/plugins
+          curl -sL "https://downloads.wordpress.org/plugin/sqlite-database-integration.latest-stable.zip" \
+            -o /tmp/sqlite.zip
+          unzip -q /tmp/sqlite.zip -d /tmp/wordpress/wp-content/plugins/
           cp /tmp/wordpress/wp-content/plugins/sqlite-database-integration/db.copy \
             /tmp/wordpress/wp-content/db.php
 
+          # 3. Create config (DB values are overridden by SQLite drop-in)
           wp config create \
             --path=/tmp/wordpress \
-            --dbname=:memory: \
-            --dbuser='' \
+            --dbname=wordpress \
+            --dbuser=root \
             --dbpass='' \
-            --dbhost='' \
             --skip-check \
             --quiet
+
+          # 4. Point the SQLite drop-in at a writable directory
           wp config set DB_DIR /tmp/wordpress/wp-content/database \
             --path=/tmp/wordpress --quiet
           mkdir -p /tmp/wordpress/wp-content/database
 
+          # 5. Install WordPress
           wp core install \
             --path=/tmp/wordpress \
             --url=http://localhost \
