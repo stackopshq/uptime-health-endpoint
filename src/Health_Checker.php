@@ -58,7 +58,10 @@ final class Health_Checker {
 			}
 		}
 
-		return [ 'errors' => $errors, 'durations' => $durations ];
+		return [
+			'errors'    => $errors,
+			'durations' => $durations,
+		];
 	}
 
 	/**
@@ -113,13 +116,13 @@ final class Health_Checker {
 	/** Read all toggle options in one pass (WP caches get_option internally). */
 	private function cfg(): array {
 		return [
-			'cron'	  => $this->opt( 'uptiheen_check_cron',	   'UPTIHEEN_CHECK_CRON',	 true ),
-			'memory'  => $this->opt( 'uptiheen_check_memory',  'UPTIHEEN_CHECK_MEMORY',	 true ),
-			'uploads' => $this->opt( 'uptiheen_check_uploads', 'UPTIHEEN_CHECK_UPLOADS', true ),
-			'disk'	  => $this->opt( 'uptiheen_check_disk',	   'UPTIHEEN_CHECK_DISK',	 true ),
-			'cache'	  => $this->opt( 'uptiheen_check_cache',   'UPTIHEEN_CHECK_CACHE',	 false ),
-			'http'	  => $this->opt( 'uptiheen_check_http',	   'UPTIHEEN_CHECK_HTTP',	 false ),
-			'homepage'=> $this->opt( 'uptiheen_homepage',	   'UPTIHEEN_HOMEPAGE',		 false ),
+			'cron'     => $this->opt( 'uptiheen_check_cron', 'UPTIHEEN_CHECK_CRON', true ),
+			'memory'   => $this->opt( 'uptiheen_check_memory', 'UPTIHEEN_CHECK_MEMORY', true ),
+			'uploads'  => $this->opt( 'uptiheen_check_uploads', 'UPTIHEEN_CHECK_UPLOADS', true ),
+			'disk'     => $this->opt( 'uptiheen_check_disk', 'UPTIHEEN_CHECK_DISK', true ),
+			'cache'    => $this->opt( 'uptiheen_check_cache', 'UPTIHEEN_CHECK_CACHE', false ),
+			'http'     => $this->opt( 'uptiheen_check_http', 'UPTIHEEN_CHECK_HTTP', false ),
+			'homepage' => $this->opt( 'uptiheen_homepage', 'UPTIHEEN_HOMEPAGE', false ),
 		];
 	}
 
@@ -128,15 +131,18 @@ final class Health_Checker {
 	 * Allows per-environment overrides (Dockerfile, wp-config.php) without
 	 * touching the admin panel.
 	 *
-	 * @param mixed $default
+	 * @param string $option   Option name.
+	 * @param string $constant Constant name.
+	 * @param mixed  $fallback Default value when neither is set.
 	 * @return mixed
 	 */
-	private function opt( string $option, string $constant, $default ) {
-		return defined( $constant ) ? constant( $constant ) : get_option( $option, $default );
+	private function opt( string $option, string $constant, $fallback ) {
+		return defined( $constant ) ? constant( $constant ) : get_option( $option, $fallback );
 	}
 
-	// ── Checks ───────────────────────────────────────────────────────────────
+	// ── Checks ──────────────────────────────────────────────────────────────
 
+	/** @return bool */
 	public function check_database(): bool {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -262,11 +268,18 @@ final class Health_Checker {
 		if ( empty( $body ) ) {
 			return false;
 		}
-		foreach ( [
-			'Fatal error', 'Parse error', 'Warning:', 'Notice:', 'Deprecated:',
-			'Uncaught Error', 'Uncaught Exception', 'critical error',
+		$php_error_patterns = [
+			'Fatal error',
+			'Parse error',
+			'Warning:',
+			'Notice:',
+			'Deprecated:',
+			'Uncaught Error',
+			'Uncaught Exception',
+			'critical error',
 			'There has been a critical error',
-		] as $pattern ) {
+		];
+		foreach ( $php_error_patterns as $pattern ) {
 			if ( false !== stripos( $body, $pattern ) ) {
 				return false;
 			}

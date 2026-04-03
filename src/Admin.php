@@ -275,7 +275,7 @@ final class Admin {
 					];
 					foreach ( $toggles as $name => [ $checked, $label, $desc ] ) :
 						$is_const = defined( strtoupper( $name ) );
-					?>
+						?>
 					<tr>
 						<th scope="row"><?php echo esc_html( $label ); ?></th>
 						<td>
@@ -381,7 +381,7 @@ final class Admin {
 			<?php
 			$history = ( new History() )->get();
 			if ( empty( $history ) ) :
-			?>
+				?>
 				<p><?php esc_html_e( 'No checks recorded yet. History is populated automatically each time the endpoint is polled.', 'uptime-health-endpoint' ); ?></p>
 			<?php else : ?>
 				<table class="widefat striped" style="max-width:700px;">

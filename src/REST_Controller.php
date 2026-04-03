@@ -49,9 +49,9 @@ final class REST_Controller {
 	}
 
 	private function secured( WP_REST_Response $r ): WP_REST_Response {
-		$r->header( 'Cache-Control',		  'no-store, no-cache, must-revalidate' );
+		$r->header( 'Cache-Control', 'no-store, no-cache, must-revalidate' );
 		$r->header( 'X-Content-Type-Options', 'nosniff' );
-		$r->header( 'X-Robots-Tag',			  'noindex, nofollow' );
+		$r->header( 'X-Robots-Tag', 'noindex, nofollow' );
 		return $r;
 	}
 }
