@@ -114,7 +114,12 @@ jobs:
       - name: Copy plugin into WordPress
         run: |
           mkdir -p /tmp/wordpress/wp-content/plugins/uptime-health-endpoint
-          rsync -a --exclude='.git' --exclude='.github' --exclude='CLAUDE.md' \
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='.phpcs.xml.dist' \
+            --exclude='CLAUDE.md' \
             . /tmp/wordpress/wp-content/plugins/uptime-health-endpoint/
 
       - name: Run Plugin Check

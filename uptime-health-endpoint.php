@@ -19,16 +19,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// ── Text domain ───────────────────────────────────────────────────────────────
-
-add_action( 'plugins_loaded', function () {
-	load_plugin_textdomain(
-		'uptime-health-endpoint',
-		false,
-		dirname( plugin_basename( __FILE__ ) ) . '/languages/'
-	);
-} );
-
 // ── Activation ────────────────────────────────────────────────────────────────
 
 register_activation_hook( __FILE__, __NAMESPACE__ . '\on_activate' );
@@ -54,18 +44,14 @@ function on_activate(): void {
 // ── Classes ───────────────────────────────────────────────────────────────────
 
 // Load in dependency order (leaf classes first)
-foreach ( [
-	'History',
-	'Webhook',
-	'Authenticator',
-	'Health_Checker',
-	'REST_Controller',
-	'Site_Health',
-	'Admin',
-	'Plugin',
-] as $class ) {
-	require_once __DIR__ . '/src/' . $class . '.php';
-}
+require_once __DIR__ . '/src/History.php';
+require_once __DIR__ . '/src/Webhook.php';
+require_once __DIR__ . '/src/Authenticator.php';
+require_once __DIR__ . '/src/Health_Checker.php';
+require_once __DIR__ . '/src/REST_Controller.php';
+require_once __DIR__ . '/src/Site_Health.php';
+require_once __DIR__ . '/src/Admin.php';
+require_once __DIR__ . '/src/Plugin.php';
 
 Plugin::instance();
 

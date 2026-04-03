@@ -10,7 +10,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 // ── Options ───────────────────────────────────────────────────────────────────
 
-$options = [
+$uptiheen_options = [
 	// Auth
 	'uptiheen_token',
 	'uptiheen_tokens',
@@ -33,8 +33,8 @@ $options = [
 	'uptiheen_activation_redirect',
 ];
 
-foreach ( $options as $option ) {
-	delete_option( $option );
+foreach ( $uptiheen_options as $uptiheen_option ) {
+	delete_option( $uptiheen_option );
 }
 
 // ── Transients ────────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ delete_transient( 'uptiheen_http_probe' );
 // Rate-limiting transients have dynamic keys: uptiheen_rate_{md5(ip)}
 // Use a LIKE query to wipe them all at once rather than tracking every IP.
 global $wpdb;
-$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->prepare(
 		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
 		$wpdb->esc_like( '_transient_uptiheen_rate_' ) . '%',
