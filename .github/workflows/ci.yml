@@ -48,13 +48,12 @@ jobs:
             "wp-coding-standards/wpcs:^3" \
             "phpcsstandards/phpcsutils:^1" \
             "phpcsstandards/phpcsextra:^1"
-          # Register standards paths manually (what dealerdirect would do automatically)
-          ~/.composer/vendor/bin/phpcs --config-set installed_paths \
-            ~/.composer/vendor/wp-coding-standards/wpcs,~/.composer/vendor/phpcsstandards/phpcsutils,~/.composer/vendor/phpcsstandards/phpcsextra
+          # Register standards paths manually ($HOME, not ~, to ensure correct expansion)
+          "$HOME/.composer/vendor/bin/phpcs" --config-set installed_paths \
+            "$HOME/.composer/vendor/wp-coding-standards/wpcs,$HOME/.composer/vendor/phpcsstandards/phpcsutils,$HOME/.composer/vendor/phpcsstandards/phpcsextra"
 
       - name: Run PHPCS
-        run: |
-          ~/.composer/vendor/bin/phpcs --report=checkstyle | cs2pr
+        run: "$HOME/.composer/vendor/bin/phpcs --report=checkstyle | cs2pr"
 
   # ── 3. WordPress Plugin Check ─────────────────────────────────────────────
   plugin-check:
