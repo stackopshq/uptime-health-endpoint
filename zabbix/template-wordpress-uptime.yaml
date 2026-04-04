@@ -1,0 +1,517 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: abcdef1234567890abcdef1234567890
+      name: Templates/WordPress
+  templates:
+    - uuid: ca5787aaacb8460cb643694f0c3ae8b4
+      template: WordPress Uptime Health Endpoint
+      name: WordPress Uptime Health Endpoint
+      description: |
+        Monitor WordPress site health via the Uptime Health Endpoint plugin v2.0+.
+
+        Requires:
+          - Plugin installed and active on the target WordPress site
+          - {$UPTIHEEN_URL} set to the site base URL (no trailing slash)
+          - {$UPTIHEEN_TOKEN} set to a valid token from the plugin settings
+
+        Endpoint polled: {$UPTIHEEN_URL}/wp-json/wp-uptime/v1/status
+
+        Checks covered: database, WordPress options, active theme, WP-Cron,
+        PHP memory, uploads directory, disk space, outbound HTTP, homepage
+        loopback, required plugins.
+
+        Optional checks (cron, memory, uploads, disk, http, homepage) are only
+        present in the response when enabled in the plugin settings. Items for
+        disabled checks will show "No data" in Zabbix — this is expected.
+      groups:
+        - name: Templates/WordPress
+      macros:
+        - macro: '{$UPTIHEEN_URL}'
+          value: ''
+          description: 'Base URL of the WordPress site, no trailing slash (e.g. https://example.com)'
+        - macro: '{$UPTIHEEN_TOKEN}'
+          value: ''
+          type: SECRET_TEXT
+          description: 'Token for the X-Healthcheck-Token request header'
+      valuemaps:
+        - uuid: abcdef1234567890abcdef1234567891
+          name: WordPress Health Check Status
+          mappings:
+            - value: '0'
+              newvalue: fail
+            - value: '1'
+              newvalue: ok
+      items:
+
+        # ── Master item ──────────────────────────────────────────────────────
+
+        - uuid: 7972c272608346029b9dcb17bdb3728a
+          name: 'WordPress health: raw JSON'
+          type: HTTP_AGENT
+          key: wordpress.uptime.raw
+          value_type: TEXT
+          description: |
+            Polls /wp-json/wp-uptime/v1/status and stores the full JSON response.
+            All other items depend on this master item via JSONPath preprocessing.
+          url: '{$UPTIHEEN_URL}/wp-json/wp-uptime/v1/status'
+          headers:
+            - name: X-Healthcheck-Token
+              value: '{$UPTIHEEN_TOKEN}'
+          timeout: '10s'
+          delay: '1m'
+          history: '3d'
+          trends: '0'
+          tags:
+            - tag: component
+              value: wordpress
+            - tag: component
+              value: uptime
+
+        # ── Overall status ───────────────────────────────────────────────────
+
+        - uuid: 1b38263ef0424340ac625525ee558d7d
+          name: 'WordPress health: overall status'
+          type: DEPENDENT
+          key: wordpress.uptime.status
+          value_type: UNSIGNED
+          description: '1 = ok, 0 = fail. Reflects the combined result of all enabled checks.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.status
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: component
+              value: wordpress
+            - tag: component
+              value: uptime
+
+        # ── Per-check items ──────────────────────────────────────────────────
+
+        - uuid: e486195b9f744083a6ea0eb801a33b79
+          name: 'WordPress check: database'
+          type: DEPENDENT
+          key: wordpress.uptime.check.db
+          value_type: UNSIGNED
+          description: 'SELECT 1 against the WordPress database. 1 = ok, 0 = fail.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.db
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: db
+
+        - uuid: 13875e22272849bf8d3382f54c581b19
+          name: 'WordPress check: wp_options'
+          type: DEPENDENT
+          key: wordpress.uptime.check.wp_options
+          value_type: UNSIGNED
+          description: 'WordPress options table readable (siteurl present). 1 = ok, 0 = fail.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.wp_options
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: wp_options
+
+        - uuid: 5422d47e98bb4aa9aca4875f271b820a
+          name: 'WordPress check: active theme'
+          type: DEPENDENT
+          key: wordpress.uptime.check.theme
+          value_type: UNSIGNED
+          description: 'Active theme exists on disk. 1 = ok, 0 = fail (missing/broken theme).'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.theme
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: theme
+
+        - uuid: 018616c7457b465684068fae5cd3eaeb
+          name: 'WordPress check: WP-Cron'
+          type: DEPENDENT
+          key: wordpress.uptime.check.cron
+          value_type: UNSIGNED
+          description: 'No scheduled cron event is overdue by more than 10 minutes. 1 = ok, 0 = fail. Absent when check is disabled in plugin settings.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.cron
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: cron
+
+        - uuid: 5cd275eb14fe4a94b390981fc6a48981
+          name: 'WordPress check: PHP memory'
+          type: DEPENDENT
+          key: wordpress.uptime.check.memory
+          value_type: UNSIGNED
+          description: 'PHP memory usage below 90% of WP_MEMORY_LIMIT. 1 = ok, 0 = fail. Absent when check is disabled.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.memory
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: memory
+
+        - uuid: 0520743eb5934359b4bb25d249575868
+          name: 'WordPress check: uploads directory'
+          type: DEPENDENT
+          key: wordpress.uptime.check.uploads
+          value_type: UNSIGNED
+          description: 'wp-content/uploads is writable. 1 = ok, 0 = fail. Absent when check is disabled.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.uploads
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: uploads
+
+        - uuid: 5aac45d96c564f7cbd8aec189c18c9fa
+          name: 'WordPress check: disk space'
+          type: DEPENDENT
+          key: wordpress.uptime.check.disk
+          value_type: UNSIGNED
+          description: 'Free disk space above threshold (default 500 MB). 1 = ok, 0 = fail. Absent when check is disabled.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.disk
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: disk
+
+        - uuid: f2ad6a059d9e4210aa21a74771174385
+          name: 'WordPress check: outbound HTTP'
+          type: DEPENDENT
+          key: wordpress.uptime.check.http
+          value_type: UNSIGNED
+          description: 'Outbound HTTP connectivity (api.wordpress.org reachable). 1 = ok, 0 = fail. Absent when check is disabled. Result is cached 5 min by the plugin.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.http
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: http
+
+        - uuid: 9ecc92fbba774c80836c9863435f470c
+          name: 'WordPress check: homepage loopback'
+          type: DEPENDENT
+          key: wordpress.uptime.check.homepage
+          value_type: UNSIGNED
+          description: 'Homepage loopback returns 2xx with a complete HTML document and no PHP errors. 1 = ok, 0 = fail. Absent when check is disabled.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.homepage
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: homepage
+
+        - uuid: d080f283ade1457181bf95c50eef9315
+          name: 'WordPress check: required plugins'
+          type: DEPENDENT
+          key: wordpress.uptime.check.plugins
+          value_type: UNSIGNED
+          description: 'All plugins listed in the Uptime Health Endpoint plugin monitoring list are active. 1 = ok, 0 = fail. Absent when no plugins are configured for monitoring.'
+          master_item:
+            key: wordpress.uptime.raw
+          valuemap:
+            name: WordPress Health Check Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.checks.plugins
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value === ''ok'' ? 1 : 0;'
+          history: '30d'
+          trends: '30d'
+          tags:
+            - tag: check
+              value: plugins
+
+        # ── Site metadata ────────────────────────────────────────────────────
+
+        - uuid: 46127591973c4a8da7cb0d4ce14aec73
+          name: 'WordPress: version'
+          type: DEPENDENT
+          key: wordpress.uptime.site.wp_version
+          value_type: CHAR
+          description: 'Installed WordPress version string reported by the site.'
+          master_item:
+            key: wordpress.uptime.raw
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.site.wp_version
+              error_handler: DISCARD_VALUE
+          history: '30d'
+          trends: '0'
+          tags:
+            - tag: component
+              value: metadata
+
+        - uuid: ec1d8f7cba164b8b8fcad34b4e0b865d
+          name: 'WordPress: PHP version'
+          type: DEPENDENT
+          key: wordpress.uptime.site.php_version
+          value_type: CHAR
+          description: 'PHP version running on the WordPress server.'
+          master_item:
+            key: wordpress.uptime.raw
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.site.php_version
+              error_handler: DISCARD_VALUE
+          history: '30d'
+          trends: '0'
+          tags:
+            - tag: component
+              value: metadata
+
+        - uuid: 28811e4520ed43a5b40643e5427daad9
+          name: 'WordPress: plugin version'
+          type: DEPENDENT
+          key: wordpress.uptime.site.plugin_version
+          value_type: CHAR
+          description: 'Installed version of the Uptime Health Endpoint plugin.'
+          master_item:
+            key: wordpress.uptime.raw
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.site.plugin_version
+              error_handler: DISCARD_VALUE
+          history: '30d'
+          trends: '0'
+          tags:
+            - tag: component
+              value: metadata
+
+      triggers:
+
+        # ── High severity ────────────────────────────────────────────────────
+
+        - uuid: dcf95196660a4764880e60612a3b57f2
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.status)=0'
+          name: 'WordPress site health check failed'
+          opdata: 'Status: {ITEM.LASTVALUE1}'
+          priority: HIGH
+          description: |
+            The overall health check returned "fail". At least one enabled check
+            is reporting a problem. Review the individual check items to identify
+            which component is failing.
+          tags:
+            - tag: scope
+              value: availability
+
+        - uuid: 47a8fa1d85eb40be8b6a2b32b960d08f
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.db)=0'
+          name: 'WordPress database check failed'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: DISASTER
+          description: |
+            The database health check (SELECT 1) is failing. The WordPress
+            database may be down, unreachable, or returning errors.
+          tags:
+            - tag: scope
+              value: availability
+
+        # ── Average severity ─────────────────────────────────────────────────
+
+        - uuid: 6fd64aabcc33404db4d08829cac3a1b1
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.cron)=0'
+          name: 'WordPress WP-Cron is overdue'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: AVERAGE
+          description: |
+            One or more scheduled WP-Cron events are more than 10 minutes
+            overdue. This may indicate that WP-Cron is not running (e.g. cron
+            execution is disabled, the site has no traffic, or cron is stuck).
+          tags:
+            - tag: scope
+              value: performance
+
+        - uuid: bead3715e1704faa8e5db8edcb527180
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.disk)=0'
+          name: 'WordPress server disk space is low'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: AVERAGE
+          description: |
+            Free disk space on the WordPress server is below the configured
+            threshold (default: 500 MB). Uploads, logs, or backups may soon fail.
+          tags:
+            - tag: scope
+              value: capacity
+
+        - uuid: 11d11c64d86c496c9cc60a46ee9b5944
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.memory)=0'
+          name: 'WordPress PHP memory usage is high'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: AVERAGE
+          description: |
+            PHP memory usage has exceeded 90% of WP_MEMORY_LIMIT. The site may
+            start throwing memory exhaustion errors.
+          tags:
+            - tag: scope
+              value: performance
+
+        - uuid: ab97c601f1ec494aa986648e9331b802
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.uploads)=0'
+          name: 'WordPress uploads directory is not writable'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: AVERAGE
+          description: |
+            The wp-content/uploads directory is not writable. Media uploads,
+            plugin updates, and theme installations will fail.
+          tags:
+            - tag: scope
+              value: availability
+
+        - uuid: 2b6f0bda8af942aa8b515003dc5d5aed
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.http)=0'
+          name: 'WordPress outbound HTTP is unavailable'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: AVERAGE
+          description: |
+            The WordPress server cannot reach api.wordpress.org. Automatic
+            updates, plugin/theme checks, and external API calls may fail.
+          tags:
+            - tag: scope
+              value: connectivity
+
+        # ── Warning severity ─────────────────────────────────────────────────
+
+        - uuid: 0de7368e2ead4d828af1c248ed970dc7
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.homepage)=0'
+          name: 'WordPress homepage loopback check failed'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: WARNING
+          description: |
+            The homepage loopback request returned a non-2xx status, an empty
+            body, or a PHP error string in the HTML. The public-facing site may
+            be displaying an error page to visitors.
+          tags:
+            - tag: scope
+              value: availability
+
+        - uuid: 3a2bb140b67c47eabee6374efb085e6b
+          expression: 'last(/WordPress Uptime Health Endpoint/wordpress.uptime.check.plugins)=0'
+          name: 'WordPress required plugin is inactive'
+          opdata: '{ITEM.LASTVALUE1}'
+          priority: WARNING
+          description: |
+            One or more plugins configured for monitoring in the Uptime Health
+            Endpoint plugin settings are not active. A required plugin may have
+            been accidentally deactivated.
+          tags:
+            - tag: scope
+              value: availability

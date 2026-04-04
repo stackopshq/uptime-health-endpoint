@@ -24,6 +24,12 @@ final class REST_Controller {
 			'permission_callback' => '__return_true',
 			'callback'			  => [ $this, 'handle' ],
 		] );
+
+		register_rest_route( 'wp-uptime/v1', '/status', [
+			'methods'			  => 'GET',
+			'permission_callback' => '__return_true',
+			'callback'			  => [ $this, 'handle_status' ],
+		] );
 	}
 
 	public function handle( WP_REST_Request $request ): WP_REST_Response {
@@ -44,6 +50,37 @@ final class REST_Controller {
 			$body['checks']	   = $errors;
 			$body['durations'] = $result['durations'];
 		}
+
+		return $this->secured( new WP_REST_Response( $body, 'ok' === $status ? 200 : 503 ) );
+	}
+
+	/**
+	 * Full-detail status endpoint for Zabbix, management consoles, and dashboards.
+	 * Runs every check (no short-circuit) and returns per-check results plus site
+	 * metadata. No side effects (no history write, no webhook).
+	 */
+	public function handle_status( WP_REST_Request $request ): WP_REST_Response {
+		if ( ! ( new Authenticator() )->validate( $request ) ) {
+			return $this->secured( new WP_REST_Response( [ 'status' => 'forbidden' ], 403 ) );
+		}
+
+		$result = ( new Health_Checker() )->run_detailed();
+		$status = empty( $result['errors'] ) ? 'ok' : 'fail';
+
+		$body = [
+			'status'  => $status,
+			'site'    => [
+				'name'           => get_bloginfo( 'name' ),
+				'url'            => get_site_url(),
+				'wp_version'     => get_bloginfo( 'version' ),
+				'php_version'    => PHP_VERSION,
+				'plugin_version' => UPTIHEEN_VERSION,
+			],
+			'checks'    => $result['checks'],
+			'failed'    => $result['errors'],
+			'durations' => $result['durations'],
+			'timestamp' => time(),
+		];
 
 		return $this->secured( new WP_REST_Response( $body, 'ok' === $status ? 200 : 503 ) );
 	}

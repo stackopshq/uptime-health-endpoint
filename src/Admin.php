@@ -98,7 +98,10 @@ final class Admin {
 	}
 
 	public function sanitize_tokens( string $value ): string {
-		$lines = array_filter( array_map( 'sanitize_text_field', explode( "\n", $value ) ) );
+		$lines = array_filter(
+			array_map( 'sanitize_text_field', explode( "\n", $value ) ),
+			fn( $t ) => strlen( $t ) >= 16
+		);
 		return implode( "\n", $lines );
 	}
 

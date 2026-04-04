@@ -39,6 +39,35 @@ final class Health_Checker {
 	}
 
 	/**
+	 * Runs all checks without short-circuiting; every check always executes.
+	 * Returns a per-check status map alongside errors and durations.
+	 * Intended for the /status endpoint used by Zabbix and management consoles.
+	 *
+	 * @return array{ errors: string[], checks: array<string,string>, durations: array<string,int> }
+	 */
+	public function run_detailed(): array {
+		$errors    = [];
+		$checks    = [];
+		$durations = [];
+
+		foreach ( $this->build_checks() as $key => $fn ) {
+			$t  = microtime( true );
+			$ok = (bool) $fn();
+			$durations[ $key ] = (int) round( ( microtime( true ) - $t ) * 1000 );
+			$checks[ $key ]    = $ok ? 'ok' : 'fail';
+			if ( ! $ok ) {
+				$errors[] = $key;
+			}
+		}
+
+		return [
+			'errors'    => $errors,
+			'checks'    => $checks,
+			'durations' => $durations,
+		];
+	}
+
+	/**
 	 * @return array{ errors: string[], durations: array<string,int> }
 	 */
 	public function run(): array {
