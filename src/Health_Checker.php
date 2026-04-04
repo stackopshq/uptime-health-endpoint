@@ -164,16 +164,24 @@ final class Health_Checker {
 	}
 
 	public function check_cron(): bool {
+		// Cache for 1 minute — deserializing the full cron array on every poll
+		// is wasteful on sites with many scheduled events.
+		$cached = get_transient( 'uptiheen_cron_probe' );
+		if ( false !== $cached ) {
+			return 'ok' === $cached;
+		}
+
+		$ok = $this->evaluate_cron();
+		set_transient( 'uptiheen_cron_probe', $ok ? 'ok' : 'fail', MINUTE_IN_SECONDS );
+		return $ok;
+	}
+
+	private function evaluate_cron(): bool {
+		$threshold = time() - 10 * MINUTE_IN_SECONDS;
+
 		// wp_get_scheduled_events() is the public API introduced in WP 6.1.
-		// For older installs we fall back to _get_cron_array() which has been
-		// stable since WP 2.1 and is the only option below 6.1.
 		if ( function_exists( 'wp_get_scheduled_events' ) ) {
-			$all_events = wp_get_scheduled_events();
-			if ( empty( $all_events ) ) {
-				return true;
-			}
-			$threshold = time() - 10 * MINUTE_IN_SECONDS;
-			foreach ( $all_events as $hook_events ) {
+			foreach ( wp_get_scheduled_events() as $hook_events ) {
 				foreach ( $hook_events as $event ) {
 					if ( isset( $event->timestamp ) && $event->timestamp < $threshold ) {
 						return false;
@@ -184,14 +192,7 @@ final class Health_Checker {
 		}
 
 		// phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- no public alternative before WP 6.1
-		$crons = _get_cron_array();
-		if ( empty( $crons ) ) {
-			return true;
-		}
-		// WP-Cron runs on page load so some lag is normal.
-		// Flag only when an event is more than 10 minutes overdue.
-		$threshold = time() - 10 * MINUTE_IN_SECONDS;
-		foreach ( array_keys( $crons ) as $timestamp ) {
+		foreach ( array_keys( (array) _get_cron_array() ) as $timestamp ) {
 			if ( $timestamp < $threshold ) {
 				return false;
 			}
@@ -212,12 +213,11 @@ final class Health_Checker {
 		if ( ! empty( $dir['error'] ) ) {
 			return false;
 		}
-		global $wp_filesystem;
-		if ( ! $wp_filesystem ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			WP_Filesystem();
-		}
-		return $wp_filesystem->is_writable( $dir['basedir'] );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
+		// We are checking readability for a health probe, not writing files.
+		// Loading WP_Filesystem (an admin-only API) on every REST poll adds
+		// ~100 ms and requires an unnecessary admin include on a REST request.
+		return is_writable( $dir['basedir'] );
 	}
 
 	public function check_disk(): bool {
@@ -271,8 +271,8 @@ final class Health_Checker {
 
 	public function check_homepage(): bool {
 		$response = wp_remote_get( home_url( '/' ), [
-			'timeout'	  => 15,
-			'sslverify'	  => false,
+			'timeout'     => 5,
+			'sslverify'   => false,
 			'redirection' => 3,
 			'user-agent'  => 'Uptime-Health-Endpoint/2.0',
 		] );

@@ -43,6 +43,7 @@ foreach ( $uptiheen_options as $uptiheen_option ) {
 
 // Known transients with fixed keys
 delete_transient( 'uptiheen_http_probe' );
+delete_transient( 'uptiheen_cron_probe' );
 
 // Rate-limiting transients have dynamic keys: uptiheen_rate_{md5(ip)}
 // Use a LIKE query to wipe them all at once rather than tracking every IP.
