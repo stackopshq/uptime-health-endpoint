@@ -242,10 +242,7 @@ final class Health_Checker {
 		if ( ! empty( $dir['error'] ) ) {
 			return false;
 		}
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
-		// We are checking readability for a health probe, not writing files.
-		// Loading WP_Filesystem (an admin-only API) on every REST poll adds
-		// ~100 ms and requires an unnecessary admin include on a REST request.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- health probe only; WP_Filesystem is admin-only and adds ~100ms latency on REST requests
 		return is_writable( $dir['basedir'] );
 	}
 

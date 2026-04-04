@@ -98,11 +98,9 @@ final class Admin {
 	}
 
 	public function sanitize_tokens( string $value ): string {
-		$lines = array_filter(
-			array_map( 'sanitize_text_field', explode( "\n", $value ) ),
-			fn( $t ) => strlen( $t ) >= 16
-		);
-		return implode( "\n", $lines );
+		$sanitized = array_map( 'sanitize_text_field', explode( "\n", $value ) );
+		$filtered  = array_filter( $sanitized, fn( $t ) => strlen( $t ) >= 16 );
+		return implode( "\n", $filtered );
 	}
 
 	public function generate_token(): void {
@@ -544,12 +542,12 @@ final class Admin {
 				<tbody>
 					<?php foreach ( $all_plugins as $plugin_file => $plugin_data ) : ?>
 					<?php
-					// Skip this plugin itself.
-					if ( 'uptime-health-endpoint/uptime-health-endpoint.php' === $plugin_file ) {
-						continue;
-					}
-					$is_active    = in_array( $plugin_file, $active_plugins, true );
-					$is_monitored = in_array( $plugin_file, $monitored_plugins, true );
+						// Skip this plugin itself.
+						if ( 'uptime-health-endpoint/uptime-health-endpoint.php' === $plugin_file ) {
+							continue;
+						}
+						$is_active    = in_array( $plugin_file, $active_plugins, true );
+						$is_monitored = in_array( $plugin_file, $monitored_plugins, true );
 					?>
 					<tr>
 						<td style="text-align:center;">
