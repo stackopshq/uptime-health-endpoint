@@ -74,15 +74,27 @@ final class Admin {
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
 			],
-			'uptiheen_homepage'       => [
+			'uptiheen_homepage'           => [
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
+			],
+			'uptiheen_monitored_plugins'  => [
+				'type'              => 'array',
+				'sanitize_callback' => [ $this, 'sanitize_monitored_plugins' ],
+				'default'           => [],
 			],
 		];
 		foreach ( $defs as $key => $args ) {
 			register_setting( 'uptiheen_settings', $key, $args );
 		}
+	}
+
+	public function sanitize_monitored_plugins( $value ): array {
+		if ( ! is_array( $value ) ) {
+			return [];
+		}
+		return array_values( array_filter( array_map( 'sanitize_text_field', $value ) ) );
 	}
 
 	public function sanitize_tokens( string $value ): string {
@@ -502,6 +514,65 @@ final class Admin {
 					</tr>
 				</tbody>
 			</table>
+
+			<hr>
+
+			<h2><?php esc_html_e( 'Plugin Monitoring', 'uptime-health-endpoint' ); ?></h2>
+			<p><?php esc_html_e( 'Enable surveillance for each installed plugin. The health check will fail if a monitored plugin is deactivated.', 'uptime-health-endpoint' ); ?></p>
+			<?php
+			if ( ! function_exists( 'get_plugins' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			}
+			$all_plugins       = get_plugins();
+			$active_plugins    = (array) get_option( 'active_plugins', [] );
+			$monitored_plugins = (array) get_option( 'uptiheen_monitored_plugins', [] );
+			if ( empty( $all_plugins ) ) :
+			?>
+				<p><?php esc_html_e( 'No plugins found.', 'uptime-health-endpoint' ); ?></p>
+			<?php else : ?>
+			<table class="widefat striped" style="max-width:700px;">
+				<thead>
+					<tr>
+						<th style="width:40px;"><?php esc_html_e( 'Monitor', 'uptime-health-endpoint' ); ?></th>
+						<th><?php esc_html_e( 'Plugin', 'uptime-health-endpoint' ); ?></th>
+						<th style="width:80px;"><?php esc_html_e( 'Status', 'uptime-health-endpoint' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $all_plugins as $plugin_file => $plugin_data ) : ?>
+					<?php
+					// Skip this plugin itself.
+					if ( 'uptime-health-endpoint/uptime-health-endpoint.php' === $plugin_file ) {
+						continue;
+					}
+					$is_active    = in_array( $plugin_file, $active_plugins, true );
+					$is_monitored = in_array( $plugin_file, $monitored_plugins, true );
+					?>
+					<tr>
+						<td style="text-align:center;">
+							<input type="checkbox"
+								name="uptiheen_monitored_plugins[]"
+								value="<?php echo esc_attr( $plugin_file ); ?>"
+								<?php checked( $is_monitored ); ?>>
+						</td>
+						<td>
+							<strong><?php echo esc_html( $plugin_data['Name'] ); ?></strong>
+							<?php if ( ! empty( $plugin_data['Version'] ) ) : ?>
+								<span style="color:#666;"> v<?php echo esc_html( $plugin_data['Version'] ); ?></span>
+							<?php endif; ?>
+						</td>
+						<td>
+							<?php if ( $is_active ) : ?>
+								<span style="color:green;">&#10003; <?php esc_html_e( 'Active', 'uptime-health-endpoint' ); ?></span>
+							<?php else : ?>
+								<span style="color:#999;">&#8212; <?php esc_html_e( 'Inactive', 'uptime-health-endpoint' ); ?></span>
+							<?php endif; ?>
+						</td>
+					</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+			<?php endif; ?>
 
 			<hr>
 

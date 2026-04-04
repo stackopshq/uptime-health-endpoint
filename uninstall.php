@@ -29,6 +29,8 @@ $uptiheen_options = [
 	// Runtime (non-autoloaded)
 	'uptiheen_history',
 	'uptiheen_last_status',
+	// Plugin monitoring
+	'uptiheen_monitored_plugins',
 	// Activation
 	'uptiheen_activation_redirect',
 ];

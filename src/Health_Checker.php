@@ -95,6 +95,12 @@ final class Health_Checker {
 			$checks['cache'] = [ $this, 'check_object_cache' ];
 		}
 
+		// Plugin monitoring — only added when at least one plugin is selected.
+		$monitored_plugins = (array) get_option( 'uptiheen_monitored_plugins', [] );
+		if ( ! empty( $monitored_plugins ) ) {
+			$checks['plugins'] = [ $this, 'check_required_plugins' ];
+		}
+
 		// Network calls last — both can be slow.
 		if ( $cfg['http'] ) {
 			$checks['http'] = [ $this, 'check_http_outbound' ];
@@ -230,6 +236,20 @@ final class Health_Checker {
 		$fetched = wp_cache_get( $key );
 		wp_cache_delete( $key );
 		return $fetched === $value;
+	}
+
+	public function check_required_plugins(): bool {
+		$monitored = (array) get_option( 'uptiheen_monitored_plugins', [] );
+		if ( empty( $monitored ) ) {
+			return true;
+		}
+		$active = (array) get_option( 'active_plugins', [] );
+		foreach ( $monitored as $plugin_file ) {
+			if ( ! in_array( $plugin_file, $active, true ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public function check_http_outbound(): bool {
