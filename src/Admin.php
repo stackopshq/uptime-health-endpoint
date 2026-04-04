@@ -528,7 +528,7 @@ final class Admin {
 			$active_plugins    = (array) get_option( 'active_plugins', [] );
 			$monitored_plugins = (array) get_option( 'uptiheen_monitored_plugins', [] );
 			if ( empty( $all_plugins ) ) :
-			?>
+				?>
 				<p><?php esc_html_e( 'No plugins found.', 'uptime-health-endpoint' ); ?></p>
 			<?php else : ?>
 			<table class="widefat striped" style="max-width:700px;">
@@ -541,14 +541,14 @@ final class Admin {
 				</thead>
 				<tbody>
 					<?php foreach ( $all_plugins as $plugin_file => $plugin_data ) : ?>
-					<?php
+						<?php
 						// Skip this plugin itself.
 						if ( 'uptime-health-endpoint/uptime-health-endpoint.php' === $plugin_file ) {
 							continue;
 						}
 						$is_active    = in_array( $plugin_file, $active_plugins, true );
 						$is_monitored = in_array( $plugin_file, $monitored_plugins, true );
-					?>
+						?>
 					<tr>
 						<td style="text-align:center;">
 							<input type="checkbox"
